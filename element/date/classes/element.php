@@ -66,31 +66,6 @@ define('CUSTOMCERT_DATE_ENROLMENT_START', '-6');
  */
 define('CUSTOMCERT_DATE_ENROLMENT_END', '-7');
 
-/**
- * Date - Relative expiry date of 1 year
- */
-define('CUSTOMCERT_DATE_EXPIRY_ONE', '-8');
-
-/**
- * Date - Relative expiry date of 2 year
- */
-define('CUSTOMCERT_DATE_EXPIRY_TWO', '-9');
-
-/**
- * Date - Relative expiry date of 3 year
- */
-define('CUSTOMCERT_DATE_EXPIRY_THREE', '-10');
-
-/**
- * Date - Relative expiry date of 4 year
- */
-define('CUSTOMCERT_DATE_EXPIRY_FOUR', '-11');
-
-/**
- * Date - Relative expiry date of 5 year
- */
-define('CUSTOMCERT_DATE_EXPIRY_FIVE', '-12');
-
 require_once($CFG->dirroot . '/lib/grade/constants.php');
 
 /**
@@ -120,12 +95,6 @@ class element extends \mod_customcert\element {
         }
         $dateoptions[CUSTOMCERT_DATE_ENROLMENT_START] = get_string('enrolmentstartdate', 'customcertelement_date');
         $dateoptions[CUSTOMCERT_DATE_ENROLMENT_END] = get_string('enrolmentenddate', 'customcertelement_date');
-
-        $dateoptions[CUSTOMCERT_DATE_EXPIRY_ONE] = get_string('expirydateone', 'customcertelement_date');
-        $dateoptions[CUSTOMCERT_DATE_EXPIRY_TWO] = get_string('expirydatetwo', 'customcertelement_date');
-        $dateoptions[CUSTOMCERT_DATE_EXPIRY_THREE] = get_string('expirydatethree', 'customcertelement_date');
-        $dateoptions[CUSTOMCERT_DATE_EXPIRY_FOUR] = get_string('expirydatefour', 'customcertelement_date');
-        $dateoptions[CUSTOMCERT_DATE_EXPIRY_FIVE] = get_string('expirydatefive', 'customcertelement_date');
 
         $dateoptions[CUSTOMCERT_DATE_COURSE_START] = get_string('coursestartdate', 'customcertelement_date');
         $dateoptions[CUSTOMCERT_DATE_COURSE_END] = get_string('courseenddate', 'customcertelement_date');
@@ -195,29 +164,15 @@ class element extends \mod_customcert\element {
 
             if ($dateitem == CUSTOMCERT_DATE_ISSUE) {
                 $date = $issue->timecreated;
-            } else if ($dateitem == CUSTOMCERT_DATE_EXPIRY_ONE) {
-                $date = strtotime('+1 years', $issue->timecreated); 
-                
-            } else if ($dateitem == CUSTOMCERT_DATE_EXPIRY_TWO) {
-                $date = strtotime('+2 years', $issue->timecreated); 
-             
-            } else if ($dateitem == CUSTOMCERT_DATE_EXPIRY_THREE) {
-                $date = strtotime('+3 years', $issue->timecreated); 
-
-            } else if ($dateitem == CUSTOMCERT_DATE_EXPIRY_FOUR) {
-                $date = strtotime('+4 years', $issue->timecreated); 
-                
-            } else if ($dateitem == CUSTOMCERT_DATE_EXPIRY_FIVE) {
-                $date = strtotime('+5 years', $issue->timecreated); 
-
             } else if ($dateitem == CUSTOMCERT_DATE_CURRENT_DATE) {
                 $date = time();
             } else if ($dateitem == CUSTOMCERT_DATE_COMPLETION) {
                 // Get the last completion date.
-                $sql = "SELECT MAX(c.timecompleted) as timecompleted
-                          FROM {course_completions} c
-                         WHERE c.userid = :userid
-                           AND c.course = :courseid";
+                $sql = "SELECT MAX(gr.timecreated) as timecompleted FROM {grade_grades} gr
+                        JOIN {grade_items} i ON i.id = gr.itemid
+                        WHERE gr.userid = :userid AND i.courseid = :courseid
+                        AND i.gradepass <= gr.finalgrade
+                        AND gr.aggregationweight > 0.0";
                 if ($timecompleted = $DB->get_record_sql($sql, array('userid' => $issue->userid, 'courseid' => $courseid))) {
                     if (!empty($timecompleted->timecompleted)) {
                         $date = $timecompleted->timecompleted;
